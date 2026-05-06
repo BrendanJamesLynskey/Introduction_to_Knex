@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction to Knex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/black.min.css">
+<style>
+  :root {
+    --amber:  #f5a623;
+    --green:  #4ecb8d;
+    --purple: #a78bfa;
+    --blue:   #60a5fa;
+    --red:    #f87171;
+    --bg:     #0a0a0f;
+    --bg2:    #10101a;
+    --bg3:    #181824;
+    --border: #2a2a3a;
+    --text:   #e8e8f0;
+    --muted:  #8888a8;
+  }
+
+  .reveal-viewport { background: var(--bg); }
+  .reveal .slides section { background: transparent; }
+
+  .reveal { font-family: 'DM Sans', sans-serif; color: var(--text); }
+  .reveal h1, .reveal h2, .reveal h3 { font-family: 'Playfair Display', serif; font-weight: 700; }
+  .reveal h1 { font-size: 1.6em; color: var(--amber); line-height: 1.1; }
+  .reveal h2 { font-size: 1.1em; color: var(--amber); margin-bottom: .2em; }
+  .reveal h3 { font-size: .78em; color: var(--green); margin-bottom: .15em; }
+  .reveal p  { font-size: .56em; line-height: 1.45; color: var(--text); }
+  .reveal li { font-size: .54em; line-height: 1.45; margin-bottom: .1em; }
+  .reveal code { font-family: 'JetBrains Mono', monospace; font-size: .72em; }
+  .reveal pre  { box-shadow: none; background: var(--bg3); border: 1px solid var(--border);
+                 border-radius: 6px; padding: .3em .5em; margin: .25em 0; }
+  .reveal pre code { font-size: .52em; line-height: 1.35; background: transparent; color: #cdd6f4; }
+
+  .slide-hdr {
+    display: flex; align-items: center; gap: .4em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: .2em; margin-bottom: .3em;
+  }
+  .slide-hdr .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .42em; font-weight: 500;
+    color: var(--bg); background: var(--amber);
+    padding: .1em .4em; border-radius: 3px;
+    letter-spacing: .04em;
+  }
+  .slide-hdr h2 { margin: 0; font-size: .95em; }
+
+  .cols   { display: grid; gap: .5em; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-6040 { grid-template-columns: 6fr 4fr; }
+  .cols-4060 { grid-template-columns: 4fr 6fr; }
+
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: .35em .6em;
+  }
+  .card.amber { border-left: 3px solid var(--amber); }
+  .card.green { border-left: 3px solid var(--green); }
+  .card.purple{ border-left: 3px solid var(--purple); }
+  .card.blue  { border-left: 3px solid var(--blue); }
+  .card.red   { border-left: 3px solid var(--red); }
+  .card h3 { font-size: .64em; margin: 0 0 .12em; }
+  .card p  { font-size: .52em; margin: 0; color: #b8b8d0; }
+  .card ul { margin: 0; padding-left: 1em; }
+  .card li { font-size: .52em; color: #b8b8d0; margin-bottom: .02em; }
+
+  .reveal table { width: 100%; border-collapse: collapse; font-size: .5em; }
+  .reveal table th { background: var(--bg3); color: var(--amber); font-weight: 600;
+                     padding: .2em .4em; border: 1px solid var(--border); text-align: left; }
+  .reveal table td { padding: .18em .4em; border: 1px solid var(--border); color: #ccc; }
+  .reveal table tr:nth-child(even) td { background: #0e0e18; }
+
+  .a  { color: var(--amber); font-weight: 600; }
+  .g  { color: var(--green); font-weight: 600; }
+  .p  { color: var(--purple); font-weight: 600; }
+  .b  { color: var(--blue); font-weight: 600; }
+  .r  { color: var(--red); font-weight: 600; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  svg.diagram { display: block; margin: 0 auto; overflow: visible; }
+
+  .pill {
+    display: inline-block; font-family: 'JetBrains Mono', monospace;
+    font-size: .44em; padding: .08em .4em; border-radius: 99px;
+    border: 1px solid; margin: 0 .08em;
+  }
+  .pill.amber { color: var(--amber); border-color: var(--amber); }
+  .pill.green { color: var(--green); border-color: var(--green); }
+  .pill.purple{ color: var(--purple); border-color: var(--purple); }
+  .pill.blue  { color: var(--blue); border-color: var(--blue); }
+
+  .reveal .slide-footer { display: none; }
+  .title-slide h1 { font-size: 1.8em; }
+  .title-slide .subtitle {
+    font-size: .7em; color: var(--green); font-family: 'DM Sans', sans-serif;
+    font-weight: 300; letter-spacing: .04em; margin: .3em 0 .6em;
+  }
+  .title-slide .meta { font-size: .48em; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .ss-row {
+    display: flex; gap: .25em; align-items: center;
+    margin: .1em 0; font-size: .55em; font-family: 'JetBrains Mono', monospace;
+  }
+  .ss-node {
+    padding: .2em .55em; border-radius: 5px; font-size: .9em;
+    background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  }
+  .ss-node.active { background: #1a2a1a; border-color: var(--green); color: var(--green); }
+  .ss-node.done   { background: #1a1a2a; border-color: var(--purple); color: var(--purple); }
+  .ss-arrow { color: var(--amber); }
+  .ss-label { font-size: .8em; color: var(--muted); margin-left: .3em; }
+
+  .reveal ul, .reveal ol { margin: .15em 0 .15em 1em; }
+  .reveal .slides > section { display: flex !important; flex-direction: column !important; overflow-y: auto !important; align-items: stretch !important; justify-content: flex-start !important; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+
+<!-- ═══════════════════════════════ SLIDE 01 — TITLE ═══════════════════════════════ -->
+<section class="title-slide" data-background-color="#0a0a0f">
+  <div style="text-align:left; max-width:820px; margin:0 auto; padding: 1em 0;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:.5em; color:var(--muted); margin-bottom:.4em; letter-spacing:.1em;">
+      TECHNICAL PRESENTATION
+    </div>
+    <h1>Introduction to<br>Knex</h1>
+    <div class="subtitle">The chainable SQL query builder for Node.js</div>
+    <div style="width:60px; height:3px; background:var(--amber); margin-bottom:1.4em;"></div>
+    <div style="display:flex; gap:1.2em; flex-wrap:wrap; margin-bottom:1em;">
+      <span class="pill amber">PostgreSQL</span>
+      <span class="pill green">MySQL</span>
+      <span class="pill purple">SQLite</span>
+      <span class="pill blue">MSSQL · Oracle</span>
+    </div>
+    <div class="ss-row" style="margin-top:0.6em;">
+      <span class="ss-node active">📝 build</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🧱 schema</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🔁 migrate</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🌱 seed</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node done">⚡ query</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node done">🔒 transact</span>
+    </div>
+    <p style="max-width:620px; color:#a0a0c0; font-size:.56em; line-height:1.5; margin-top:1em;">
+      One chainable JavaScript API, one connection pool, parameterised SQL across five dialects — plus migrations, seeds and transactions in the same toolbox.
+    </p>
+    <div class="meta" style="margin-top:1.4em;">
+      Build &nbsp;·&nbsp; Schema &nbsp;·&nbsp; Migrate &nbsp;·&nbsp; Seed &nbsp;·&nbsp; Query &nbsp;·&nbsp; Transact
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 02 — TOPICS ═══════════════════════════════ -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">02</span><h2>Topics</h2></div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Foundations</h3>
+        <ul>
+          <li>What Knex is — origins, scope, query builder vs ORM</li>
+          <li>Why Knex — abstraction, dialect portability, trade-offs</li>
+          <li>Installation, clients, the first query</li>
+          <li><code>knexfile.js</code>, environments, pool configuration</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:0.5em;">
+        <h3 class="g">Querying</h3>
+        <ul>
+          <li><code>SELECT</code>, <code>WHERE</code>, ordering, limit</li>
+          <li>Joins — inner, left, right, cross, self</li>
+          <li>Aggregates &amp; <code>GROUP BY</code> / <code>HAVING</code></li>
+          <li><code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> with <code>RETURNING</code></li>
+          <li>Sub-queries, CTEs, <code>UNION</code></li>
+          <li><code>knex.raw</code> &amp; safe bindings</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Schema &amp; data</h3>
+        <ul>
+          <li>Schema builder — <code>createTable</code>, <code>alterTable</code></li>
+          <li>Migrations — <code>up</code>/<code>down</code>, ordering, drift</li>
+          <li>Seeds &amp; fixtures — idempotent populate</li>
+          <li>Transactions, savepoints, isolation</li>
+          <li>Streams, <code>batchInsert</code>, pagination</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.5em;">
+        <h3 class="b">Production</h3>
+        <ul>
+          <li>TypeScript with Knex — typed tables &amp; results</li>
+          <li>Express integration patterns</li>
+          <li>Testing — in-memory SQLite, transaction rollback</li>
+          <li>Performance, <code>.toSQL()</code>, pool tuning, gotchas</li>
+          <li>Knex vs Prisma, Drizzle, Kysely, TypeORM, raw</li>
+          <li>Migration playbook and observability</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 03 — WHAT IS KNEX ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">03</span><h2>What Is Knex?</h2></div>
+  <p>Knex is a <span class="a">SQL query builder</span> for Node.js — created by Tim Griesser in 2013 and now maintained by the <span class="g">knex.js community</span>. It generates parameterised SQL for PostgreSQL, MySQL/MariaDB, SQLite, MSSQL, Oracle and CockroachDB from a chainable JavaScript API.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>What it owns</h3>
+        <ul>
+          <li><span class="a">Query building</span> — chainable, composable, parameterised</li>
+          <li><span class="a">Schema builder</span> — DDL across dialects in JS</li>
+          <li><span class="a">Migrations</span> — versioned, ordered, reversible</li>
+          <li><span class="a">Seeds</span> — repeatable data population</li>
+          <li><span class="a">Connection pool</span> — via <code>tarn</code></li>
+          <li><span class="a">Transactions</span> — including savepoints</li>
+          <li>Streams &amp; batching for large result sets</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>What it deliberately is not</h3>
+        <ul>
+          <li>Not an ORM — no models, no identity map, no lazy relations</li>
+          <li>No relationship objects — you write the JOIN</li>
+          <li>No code generation from the schema</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Where it sits in the stack</h3>
+        <table>
+          <thead><tr><th>Layer</th><th>Tool</th><th>You write</th></tr></thead>
+          <tbody>
+            <tr><td>Driver</td><td><code>pg</code> · <code>mysql2</code> · <code>better-sqlite3</code></td><td>Raw SQL strings</td></tr>
+            <tr><td><span class="g">Query builder</span></td><td><span class="g">Knex · Kysely</span></td><td><span class="g">Chainable JS</span></td></tr>
+            <tr><td>ORM</td><td>Prisma · TypeORM · Sequelize</td><td>Models &amp; relations</td></tr>
+            <tr><td>ODM</td><td>Mongoose</td><td>Documents</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Who uses it</h3>
+        <ul>
+          <li>Used internally by <span class="b">Bookshelf.js</span>, <span class="b">Objection.js</span> and <span class="b">Strapi v3</span></li>
+          <li>Powers query layers in countless Express / Koa / Fastify apps</li>
+          <li>Still active — maintenance releases through 2024–2025; v3 in development</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 04 — WHY KNEX ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">04</span><h2>Why Knex? &mdash; Pain Points and Trade-offs</h2></div>
+  <p>Raw drivers force string concatenation; ORMs force a model layer. Knex sits between them &mdash; <span class="a">SQL stays SQL</span>, but composition becomes a function call rather than a template string.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card green"><h3>What you gain</h3>
+        <ul>
+          <li><span class="g">Composability</span> &mdash; conditional <code>.where()</code> / <code>.join()</code> without ad-hoc string splicing</li>
+          <li><span class="g">Parameterisation by default</span> &mdash; bindings always go through the driver, no SQL-injection footgun</li>
+          <li><span class="g">Dialect portability</span> &mdash; the same code targets PG, MySQL, SQLite, MSSQL, Oracle</li>
+          <li><span class="g">Migrations &amp; seeds in the box</span> &mdash; no separate flyway / sqitch / db-migrate</li>
+          <li>One <span class="g">connection pool</span> shared across the app</li>
+        </ul>
+      </div>
+      <div class="card amber" style="margin-top:.3em;"><h3>Composition example</h3>
+<pre><code class="language-javascript">function listUsers({ role, search, page = 1 }) {
+  let q = knex('users').select('id', 'name', 'email');
+  if (role)   q = q.where('role', role);
+  if (search) q = q.whereILike('name', `%${search}%`);
+  return q.orderBy('created_at', 'desc')
+          .limit(20).offset((page - 1) * 20);
+}</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card red"><h3>What you give up</h3>
+        <ul>
+          <li><span class="r">No model layer</span> &mdash; no <code>user.posts</code>, no cascade deletes, no identity map</li>
+          <li><span class="r">No code-gen types</span> &mdash; rows are <code>any</code> unless you bring TS declarations or Zod</li>
+          <li><span class="r">Dialect parity is partial</span> &mdash; window functions, JSON, <code>RETURNING</code>, upserts differ between databases</li>
+          <li><span class="r">Maintenance velocity</span> is slower than Prisma / Drizzle &mdash; v2 is mature; v3 is in development</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>When Knex is the right tool</h3>
+        <ul>
+          <li>You think in SQL and want SQL on the wire</li>
+          <li>Reporting / analytics queries that an ORM mangles</li>
+          <li>Multi-dialect codebase &mdash; SQLite for tests, PG in prod</li>
+          <li>Migrating a legacy schema without re-modelling it</li>
+          <li>Building <em>another</em> abstraction (Objection.js, Strapi-style) on top</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 05 — INSTALLATION ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">05</span><h2>Installation &amp; First Query</h2></div>
+  <p>Install Knex itself plus <span class="a">one driver per dialect</span> &mdash; Knex is dialect-agnostic and only loads the driver you ask for.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Install</h3>
+<pre><code class="language-bash">npm install knex
+
+# pick the driver(s) you need
+npm install pg                  # PostgreSQL / CockroachDB
+npm install mysql2              # MySQL / MariaDB
+npm install better-sqlite3      # SQLite (sync)
+npm install sqlite3             # SQLite (async, legacy)
+npm install tedious             # MSSQL
+npm install oracledb            # Oracle
+
+# CLI for migrations / seeds
+npm install --save-dev knex
+npx knex --version</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Driver matrix</h3>
+        <table>
+          <thead><tr><th>Dialect</th><th>Client</th><th>Driver</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td><code>pg</code></td><td>node-postgres</td></tr>
+            <tr><td>MySQL / MariaDB</td><td><code>mysql2</code></td><td>sidorares/node-mysql2</td></tr>
+            <tr><td>SQLite</td><td><code>better-sqlite3</code></td><td>WiseLibs/better-sqlite3</td></tr>
+            <tr><td>MSSQL</td><td><code>mssql</code></td><td>tediousjs/tedious</td></tr>
+            <tr><td>Oracle</td><td><code>oracledb</code></td><td>oracle/node-oracledb</td></tr>
+            <tr><td>CockroachDB</td><td><code>cockroachdb</code></td><td>via <code>pg</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>The thirty-second tour</h3>
+<pre><code class="language-javascript">// db.js
+const knex = require('knex')({
+  client: 'pg',
+  connection: process.env.DATABASE_URL,
+  pool: { min: 2, max: 10 }
+});
+
+// run any query
+const users = await knex('users')
+  .select('id', 'name', 'email')
+  .where('active', true)
+  .orderBy('created_at', 'desc')
+  .limit(20);
+
+console.log(users);
+await knex.destroy();   // close the pool on shutdown</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>What happens behind the scenes</h3>
+        <ol>
+          <li>Knex compiles the chain into dialect-specific SQL</li>
+          <li>Bindings stay separate &mdash; the driver parameterises them</li>
+          <li>Pool checks out a connection (or queues)</li>
+          <li>Driver sends prepared statement; rows return as a Promise</li>
+          <li>Connection returns to the pool</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 06 — KNEXFILE ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">06</span><h2>knexfile.js &amp; Environments</h2></div>
+  <p>The <span class="a"><code>knexfile.js</code></span> is the canonical config &mdash; consumed by the CLI for migrations and seeds, and re-used by app code via <code>require('./knexfile')</code>. One file, one config per environment.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>knexfile.js</h3>
+<pre><code class="language-javascript">// knexfile.js
+require('dotenv').config();
+
+module.exports = {
+  development: {
+    client: 'pg',
+    connection: process.env.DATABASE_URL ||
+                'postgres://dev:dev@localhost:5432/myapp',
+    pool: { min: 2, max: 10 },
+    migrations: { directory: './db/migrations' },
+    seeds:      { directory: './db/seeds/development' }
+  },
+
+  test: {
+    client: 'better-sqlite3',
+    connection: { filename: ':memory:' },
+    useNullAsDefault: true,
+    migrations: { directory: './db/migrations' },
+    seeds:      { directory: './db/seeds/test' }
+  },
+
+  production: {
+    client: 'pg',
+    connection: {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    },
+    pool: { min: 2, max: 20, idleTimeoutMillis: 30_000 },
+    migrations: { directory: './db/migrations',
+                  tableName: 'knex_migrations' }
+  }
+};</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Picking up the env</h3>
+<pre><code class="language-bash"># CLI uses NODE_ENV, defaulting to development
+NODE_ENV=production npx knex migrate:latest
+NODE_ENV=test        npx knex seed:run
+
+# explicit:
+npx knex migrate:latest --env production
+npx knex --knexfile ./infra/knexfile.js migrate:status</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>App-side instantiation</h3>
+<pre><code class="language-javascript">// db.js — single shared instance
+const config = require('../knexfile');
+const knex = require('knex')(
+  config[process.env.NODE_ENV || 'development']
+);
+module.exports = knex;</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Tips</h3>
+        <ul>
+          <li>One Knex instance per process &mdash; never <code>require('knex')(...)</code> per request</li>
+          <li>Co-locate <code>migrations/</code> and <code>seeds/</code> with the app code</li>
+          <li>Store secrets in env vars, not in the knexfile</li>
+          <li>Same migrations directory across dev/test/prod &mdash; only the connection differs</li>
+          <li>Use <code>useNullAsDefault: true</code> for SQLite to silence a warning</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 07 — POOL ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">07</span><h2>The Connection Pool</h2></div>
+  <p>Knex pools connections via <span class="a">tarn.js</span>. The pool is shared across every query the Knex instance runs. Understanding it is the difference between a fast app and a stalled one.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Pool config</h3>
+<pre><code class="language-javascript">const knex = require('knex')({
+  client: 'pg',
+  connection: process.env.DATABASE_URL,
+  pool: {
+    min: 2,                       // keep this many warm
+    max: 20,                      // hard cap on live conns
+    acquireTimeoutMillis: 30_000, // queued, then throws
+    createTimeoutMillis: 5_000,   // TCP handshake budget
+    idleTimeoutMillis: 30_000,    // close idle conns
+    reapIntervalMillis: 1_000,    // sweep frequency
+    afterCreate: (conn, done) =&gt; {
+      // run on every new connection
+      conn.query("SET TIME ZONE 'UTC'", err =&gt; done(err, conn));
+    }
+  }
+});</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Anti-patterns</h3>
+        <ul>
+          <li>Creating a Knex instance per request &mdash; exhausts DB connections in seconds</li>
+          <li>Forgetting <code>knex.destroy()</code> in test teardown &mdash; leaks conns, hangs Jest</li>
+          <li>Setting <code>max</code> = thousands &mdash; the DB is the bottleneck, not Knex</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Sizing rules of thumb</h3>
+        <ul>
+          <li>PG default <code>max_connections</code> = 100 &mdash; budget across <em>all</em> services</li>
+          <li>With <em>N</em> app instances: <code>max</code> ≈ <code>(server_max - reserved) / N</code></li>
+          <li>Saturating CPU on the DB &gt; opening more connections</li>
+          <li>For high concurrency, front the DB with <span class="g">PgBouncer</span> in transaction-pooling mode</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Health visibility</h3>
+<pre><code class="language-javascript">// expose pool stats on /healthz
+app.get('/healthz/db', (_req, res) =&gt; {
+  const p = knex.client.pool;
+  res.json({
+    used:    p.numUsed(),
+    free:    p.numFree(),
+    pending: p.numPendingAcquires(),
+    queued:  p.numPendingCreates()
+  });
+});
+
+// also: knex.on('query', ...) and 'query-error'</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Symptoms &rarr; cause</h3>
+        <ul>
+          <li><code>numPendingAcquires</code> climbs &rarr; pool too small or queries too slow</li>
+          <li><code>TimeoutError: Knex: Timeout acquiring a connection</code> &rarr; deadlock, leak, or unbounded queue</li>
+          <li>RSS keeps climbing &rarr; transactions held without commit/rollback</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 08 — SELECT ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">08</span><h2>SELECT &mdash; Where, Order, Limit</h2></div>
+  <p>The query builder mirrors SQL clause names. Every chain is <span class="a">thenable</span> &mdash; you can <code>await</code> it directly &mdash; and every chain stays composable until awaited.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Basic SELECT</h3>
+<pre><code class="language-javascript">// columns
+await knex('users').select('id', 'name');
+await knex('users').select(); // all columns (== '*')
+
+// where
+await knex('users').where({ active: true, role: 'admin' });
+await knex('users').where('created_at', '&gt;', '2025-01-01');
+
+// chained AND / OR
+await knex('users')
+  .where('role', 'admin')
+  .orWhere(b =&gt; b.where('role', 'editor').andWhere('verified', true));
+
+// IN / NOT IN
+await knex('users').whereIn('id', [1, 2, 3]);
+await knex('users').whereNotIn('role', ['guest']);
+
+// NULL handling
+await knex('users').whereNull('deleted_at');
+
+// LIKE / ILIKE (PG)
+await knex('users').whereILike('email', '%@dev.io');</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Ordering, limit, distinct</h3>
+<pre><code class="language-javascript">await knex('posts')
+  .select('id', 'title')
+  .orderBy([
+    { column: 'pinned', order: 'desc' },
+    { column: 'created_at', order: 'desc' }
+  ])
+  .limit(20).offset(40);
+
+await knex('posts').distinct('author_id');
+await knex('users').count('* as total').first();   // { total: '342' }
+await knex('users').pluck('email');                // ['a@x','b@x',...]
+await knex('users').first('id', 'name');           // single row
+</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Where-callbacks for grouping</h3>
+<pre><code class="language-javascript">// SELECT ... WHERE active = true
+//   AND (role = 'admin' OR role = 'editor')
+await knex('users')
+  .where('active', true)
+  .andWhere(b =&gt;
+    b.where('role', 'admin').orWhere('role', 'editor'));</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Inspect what is sent</h3>
+<pre><code class="language-javascript">const q = knex('users').where('id', 1).toSQL();
+// q.sql      &mdash; "select * from users where id = ?"
+// q.bindings &mdash; [1]
+// q.method   &mdash; "select"
+console.log(q.toNative()); // dialect-native syntax (e.g. $1 for pg)</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 09 — JOINS ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">09</span><h2>Joins</h2></div>
+  <p>Knex exposes every join SQL has, plus a <span class="a">callback form</span> for compound <code>ON</code> clauses. There are no relationship objects &mdash; you write the join you want, and the planner sees the SQL you wrote.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Inner / left / right / cross</h3>
+<pre><code class="language-javascript">// inner join
+await knex('posts as p')
+  .join('users as u', 'u.id', 'p.author_id')
+  .select('p.id', 'p.title', 'u.name as author');
+
+// left join &mdash; users with optional posts
+await knex('users as u')
+  .leftJoin('posts as p', 'p.author_id', 'u.id')
+  .select('u.id', 'u.name', 'p.title');
+
+// compound ON
+await knex('orders as o')
+  .join('payments as pm', function () {
+    this.on('pm.order_id', '=', 'o.id')
+        .andOn('pm.status', '=', knex.raw('?', ['captured']));
+  });
+
+// self-join &mdash; reports-to manager
+await knex('employees as e')
+  .leftJoin('employees as m', 'e.manager_id', 'm.id')
+  .select('e.name', 'm.name as manager');</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Aggregating across a join</h3>
+<pre><code class="language-javascript">await knex('users as u')
+  .leftJoin('posts as p', 'p.author_id', 'u.id')
+  .select('u.id', 'u.name')
+  .count('p.id as post_count')
+  .groupBy('u.id', 'u.name')
+  .havingRaw('count(p.id) &gt; ?', [5])
+  .orderBy('post_count', 'desc');</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Knex vs an ORM relation</h3>
+        <table>
+          <thead><tr><th>Need</th><th>ORM</th><th>Knex</th></tr></thead>
+          <tbody>
+            <tr><td>One-to-many fetch</td><td><code>include: { posts: true }</code></td><td>You write <code>leftJoin</code></td></tr>
+            <tr><td>Conditional eager load</td><td>Often awkward</td><td>Trivial</td></tr>
+            <tr><td>Cascade delete</td><td>Declared in model</td><td>Declared in DB schema</td></tr>
+            <tr><td>Nested shape</td><td>Free</td><td>You shape it</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Pitfalls</h3>
+        <ul>
+          <li>Forgetting table aliases on ambiguous columns &rarr; runtime SQL error</li>
+          <li>Using <code>.where()</code> instead of <code>.on()</code> inside the join callback</li>
+          <li>Cross-join by accident: missing <code>ON</code> in the callback form</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 10 — AGGREGATES ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">10</span><h2>Aggregates &amp; Grouping</h2></div>
+  <p>Knex covers the standard aggregate functions and a few PG-specific helpers. For anything truly bespoke, drop down to <code>knex.raw</code>; the rest of the chain still works around it.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Counts &amp; sums</h3>
+<pre><code class="language-javascript">// count rows
+await knex('orders').count('* as total').first();
+// COUNT(DISTINCT user_id)
+await knex('orders').countDistinct('user_id as buyers');
+
+// sum / min / max / avg
+await knex('orders')
+  .select('user_id')
+  .sum('total as revenue')
+  .min('created_at as first_order')
+  .max('created_at as last_order')
+  .groupBy('user_id');
+
+// having + havingRaw
+await knex('orders')
+  .select('user_id')
+  .sum('total as revenue')
+  .groupBy('user_id')
+  .havingRaw('SUM(total) &gt; ?', [1000]);</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Window functions (raw)</h3>
+<pre><code class="language-javascript">// row_number per author, by created_at desc
+await knex('posts')
+  .select('id', 'title', 'author_id')
+  .select(knex.raw(
+    'row_number() over (partition by author_id ' +
+    'order by created_at desc) as rn'
+  ));</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>PG-specific helpers</h3>
+<pre><code class="language-javascript">// ARRAY_AGG / JSON_AGG via raw
+await knex('users as u')
+  .leftJoin('posts as p', 'p.author_id', 'u.id')
+  .select('u.id', 'u.name')
+  .select(knex.raw(
+    "json_agg(p.title order by p.created_at desc) as posts"
+  ))
+  .groupBy('u.id');
+
+// upsert &mdash; ON CONFLICT
+await knex('users')
+  .insert({ email: 'a@x', name: 'Alice' })
+  .onConflict('email').merge({ name: 'Alice' });
+
+// merge with subset only
+await knex('users')
+  .insert({ email: 'a@x', name: 'Alice', source: 'csv' })
+  .onConflict('email').merge(['name']);</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>String &amp; date helpers</h3>
+        <ul>
+          <li><code>knex.fn.now()</code> &mdash; <code>CURRENT_TIMESTAMP</code> across dialects</li>
+          <li><code>knex.fn.uuid()</code> &mdash; <code>gen_random_uuid()</code> on PG, <code>UUID()</code> on MySQL 8</li>
+          <li><code>knex.ref('users.id')</code> &mdash; safe identifier reference</li>
+          <li>Use <code>knex.raw(?, [val])</code> for bindings &mdash; never template-string a value</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 11 — INSERT UPDATE DELETE ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">11</span><h2>INSERT, UPDATE, DELETE &mdash; with RETURNING</h2></div>
+  <p>Mutating queries follow the same chainable shape. <code>returning()</code> is the single most useful flag &mdash; it skips a round-trip to read back the new row.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>INSERT</h3>
+<pre><code class="language-javascript">// single row, return generated columns (PG, SQLite, MSSQL)
+const [user] = await knex('users')
+  .insert({ name: 'Alice', email: 'a@dev.io' })
+  .returning(['id', 'created_at']);
+
+// bulk &mdash; one INSERT statement
+await knex('users').insert([
+  { name: 'Bob',   email: 'b@dev.io' },
+  { name: 'Carol', email: 'c@dev.io' }
+]);
+
+// onConflict &mdash; upsert
+await knex('users')
+  .insert({ email: 'a@dev.io', name: 'Alice 2' })
+  .onConflict('email').merge();
+
+// ignore on conflict
+await knex('audit_log')
+  .insert(rows).onConflict('event_id').ignore();</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>MySQL caveat</h3>
+        <p>MySQL &lt; 8 doesn't support <code>RETURNING</code>. Knex uses <code>LAST_INSERT_ID()</code> for the auto-increment column only &mdash; for the full row, do a follow-up <code>SELECT</code>.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>UPDATE</h3>
+<pre><code class="language-javascript">// update with returning
+const [updated] = await knex('users')
+  .where('id', 42)
+  .update({
+    name: 'Alice Smith',
+    last_login: knex.fn.now()
+  })
+  .returning('*');
+
+// increment / decrement (atomic on the DB side)
+await knex('counters').where('id', 1).increment('hits', 1);
+await knex('inventory').where('product_id', 99).decrement('stock', 1);
+
+// conditional update &mdash; rows-affected returned by default
+const rowCount = await knex('users')
+  .where('verified', false)
+  .where('created_at', '&lt;', knex.raw("now() - interval '30 days'"))
+  .update({ status: 'expired' });</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>DELETE</h3>
+<pre><code class="language-javascript">// returns affected row count
+await knex('sessions').where('expires_at', '&lt;', knex.fn.now()).del();
+
+// soft delete pattern
+await knex('users').where('id', 42)
+  .update({ deleted_at: knex.fn.now() });
+
+// truncate (if your dialect supports it)
+await knex('temp_uploads').truncate();</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 12 — SUBQUERIES & CTEs ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">12</span><h2>Sub-queries, CTEs &amp; UNION</h2></div>
+  <p>Composition pays off here: any builder can be passed as a sub-query, and CTEs are written with <code>.with()</code>. The same Knex chain that produces a row set can also produce a <code>FROM</code> clause.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Sub-queries inline</h3>
+<pre><code class="language-javascript">// scalar sub-query in WHERE
+await knex('users').where('id', '=',
+  knex('orders').max('user_id').where('total', '&gt;', 1000)
+);
+
+// EXISTS / NOT EXISTS
+await knex('users').whereExists(
+  knex('orders').whereRaw('orders.user_id = users.id')
+);
+
+// IN with sub-query
+await knex('users').whereIn('id',
+  knex('orders').select('user_id').where('total', '&gt;', 100)
+);
+
+// sub-query as a derived table
+const top = knex('orders')
+  .select('user_id').sum('total as revenue')
+  .groupBy('user_id').as('t');
+
+await knex('users as u')
+  .innerJoin(top, 'u.id', 't.user_id')
+  .select('u.name', 't.revenue')
+  .orderBy('t.revenue', 'desc').limit(10);</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>CTEs &mdash; <code>WITH ...</code></h3>
+<pre><code class="language-javascript">// non-recursive CTE
+await knex
+  .with('recent_orders',
+    knex('orders').where('created_at', '&gt;',
+      knex.raw("now() - interval '7 days'")))
+  .select('user_id').count('* as orders_7d')
+  .from('recent_orders').groupBy('user_id');
+
+// recursive CTE &mdash; manager hierarchy
+await knex.withRecursive('chain',
+  knex('employees').select('id', 'manager_id', 'name')
+       .where('id', 42)
+       .unionAll(qb =&gt; qb.select('e.id','e.manager_id','e.name')
+                       .from('employees as e')
+                       .innerJoin('chain as c', 'c.manager_id', 'e.id'))
+).select().from('chain');</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>UNION / INTERSECT / EXCEPT</h3>
+<pre><code class="language-javascript">await knex('archived_users').select('id','email')
+  .union(knex('users').select('id','email').where('active', false));
+
+// unionAll keeps duplicates and skips a sort step
+await q1.unionAll([q2, q3]);</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Why this matters</h3>
+        <p>This is where Knex shines and most ORMs stumble &mdash; window functions, recursive CTEs, derived tables and complex aggregations all stay first-class. You don't drop into raw strings; you compose builders.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 13 — RAW SQL ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">13</span><h2><code>knex.raw</code> &amp; Safe Bindings</h2></div>
+  <p>Sometimes the chain doesn't go far enough &mdash; database-specific functions, vendor extensions, full-text search. <code>knex.raw</code> is the escape hatch &mdash; with <span class="a">positional</span>, <span class="g">named</span> and <span class="b">identifier</span> bindings to keep parameterisation intact.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Three binding styles</h3>
+<pre><code class="language-javascript">// ?  &mdash; positional value binding
+knex.raw('select * from users where id = ?', [42]);
+
+// :name  &mdash; named binding
+knex.raw('select * from users where role = :role',
+         { role: 'admin' });
+
+// ??  &mdash; identifier binding (table / column)
+knex.raw('select ?? from ??', ['email', 'users']);
+
+// mixed
+knex.raw('update ?? set ?? = ? where ?? = :id',
+         ['users', 'name', 'Alice', 'id', { id: 42 }]);</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Never do this</h3>
+<pre><code class="language-javascript">// 🚨 SQL injection &mdash; user input concatenated
+knex.raw(`select * from users where email = '${input}'`);
+
+// ✅ parameterised
+knex.raw('select * from users where email = ?', [input]);</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Raw inside a chain</h3>
+<pre><code class="language-javascript">// raw fragment in a SELECT
+await knex('events')
+  .select('user_id', knex.raw('count(*) filter (where kind = ?) as logins',
+                              ['login']))
+  .groupBy('user_id');
+
+// raw expression in WHERE
+await knex('users')
+  .whereRaw('lower(email) = ?', [email.toLowerCase()]);
+
+// raw in ORDER BY (e.g. NULLS LAST on PG)
+await knex('users')
+  .orderByRaw('last_login desc nulls last');</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Useful raw companions</h3>
+        <ul>
+          <li><code>knex.ref('users.email')</code> &mdash; quoted identifier; reusable</li>
+          <li><code>knex.fn.now()</code>, <code>knex.fn.uuid()</code> &mdash; portable functions</li>
+          <li><code>.toSQL()</code>, <code>.toString()</code> &mdash; render SQL for logging or tests</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Full-text example (PG)</h3>
+<pre><code class="language-javascript">await knex('articles')
+  .select('id', 'title')
+  .whereRaw("to_tsvector('english', body) @@ plainto_tsquery(?)",
+            [query])
+  .orderByRaw("ts_rank(to_tsvector('english', body), " +
+              "plainto_tsquery(?)) desc", [query]);</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 14 — SCHEMA BUILDER ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">14</span><h2>Schema Builder</h2></div>
+  <p>The same JS API that builds queries also builds <span class="a">DDL</span>. Knex translates a column-by-column description into the right <code>CREATE TABLE</code> for each dialect, including index syntax and FK clauses.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Creating a table</h3>
+<pre><code class="language-javascript">await knex.schema.createTable('users', (t) =&gt; {
+  t.increments('id').primary();
+  t.string('email', 320).notNullable().unique();
+  t.string('name').notNullable();
+  t.specificType('role', 'user_role').notNullable()
+   .defaultTo('user');
+  t.boolean('active').notNullable().defaultTo(true);
+  t.jsonb('metadata').defaultTo('{}');
+  t.timestamp('last_login_at');
+  t.timestamps(true, true);            // created_at, updated_at
+
+  t.index(['active', 'role']);
+  t.index('email', 'users_email_lower_idx',
+          { storageEngineIndexType: 'btree' });
+});
+
+// posts &mdash; with FK
+await knex.schema.createTable('posts', (t) =&gt; {
+  t.uuid('id').primary().defaultTo(knex.fn.uuid());
+  t.text('title').notNullable();
+  t.text('body');
+  t.integer('author_id').unsigned().notNullable()
+   .references('id').inTable('users').onDelete('CASCADE');
+  t.timestamps(true, true);
+});</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Altering, dropping</h3>
+<pre><code class="language-javascript">await knex.schema.alterTable('users', (t) =&gt; {
+  t.string('handle', 60).unique();        // add column
+  t.dropColumn('legacy_token');
+  t.renameColumn('name', 'display_name');
+  t.string('email', 320).notNullable().alter();
+});
+
+// rename / drop a table
+await knex.schema.renameTable('users', 'accounts');
+await knex.schema.dropTableIfExists('temp_uploads');
+
+// create an index outside of a table block
+await knex.schema.alterTable('posts', (t) =&gt; {
+  t.index(['author_id', 'created_at']);
+});</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Column type cheat sheet</h3>
+        <table>
+          <thead><tr><th>Knex</th><th>PG</th><th>MySQL</th></tr></thead>
+          <tbody>
+            <tr><td><code>increments()</code></td><td><code>serial</code></td><td><code>int auto_increment</code></td></tr>
+            <tr><td><code>bigIncrements()</code></td><td><code>bigserial</code></td><td><code>bigint auto_increment</code></td></tr>
+            <tr><td><code>uuid()</code></td><td><code>uuid</code></td><td><code>char(36)</code></td></tr>
+            <tr><td><code>text()</code></td><td><code>text</code></td><td><code>longtext</code></td></tr>
+            <tr><td><code>jsonb()</code></td><td><code>jsonb</code></td><td><code>json</code></td></tr>
+            <tr><td><code>timestamps(true,true)</code></td><td>timestamptz NOT NULL</td><td>timestamp NOT NULL</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Don't fight your dialect</h3>
+        <p>Use <code>specificType()</code> for vendor types (PG enums, <code>tsvector</code>, <code>citext</code>) &mdash; portability already broke the moment you used them, so make it explicit.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 15 — MIGRATIONS ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">15</span><h2>Migrations</h2></div>
+  <p>Migrations are <span class="a">version control for your schema</span>. Knex tracks which have been applied in a <code>knex_migrations</code> table; migrations run in <span class="a">timestamp order</span>, in batches, and each is wrapped in a transaction (where the dialect allows).</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Workflow</h3>
+<pre><code class="language-bash"># scaffold a new migration
+npx knex migrate:make add_posts_table
+
+# &rarr; db/migrations/20260506T120000_add_posts_table.js
+
+# apply pending migrations
+npx knex migrate:latest
+
+# undo the last batch
+npx knex migrate:rollback
+
+# show what is applied / pending
+npx knex migrate:status
+npx knex migrate:list
+
+# move forward / back one at a time
+npx knex migrate:up
+npx knex migrate:down
+
+# unlock if a migration crashed mid-run
+npx knex migrate:unlock</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>The migration file</h3>
+<pre><code class="language-javascript">// 20260506T120000_add_posts_table.js
+exports.up = async function (knex) {
+  await knex.schema.createTable('posts', (t) =&gt; {
+    t.increments('id').primary();
+    t.string('title').notNullable();
+    t.text('body');
+    t.integer('author_id').unsigned()
+     .references('id').inTable('users').onDelete('CASCADE');
+    t.timestamps(true, true);
+    t.index(['author_id', 'created_at']);
+  });
+};
+
+exports.down = async function (knex) {
+  await knex.schema.dropTable('posts');
+};
+
+// optional &mdash; isolates this migration's transaction
+exports.config = { transaction: false };</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Rules of the road</h3>
+        <ul>
+          <li>Filenames sort lexicographically &mdash; the timestamp prefix is load-bearing</li>
+          <li>Once a migration is committed and shipped, it is <span class="r">immutable</span> &mdash; any change goes in a new file</li>
+          <li><code>up</code> and <code>down</code> are mirror images &mdash; if <code>down</code> can't unwind <code>up</code>, document why</li>
+          <li>Avoid mixing schema changes and bulk data updates in one migration &mdash; the lock is held for the whole transaction</li>
+          <li>For long backfills: <span class="p">expand &rarr; migrate &rarr; contract</span> across deploys</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Production gotchas</h3>
+        <ul>
+          <li>PG: certain DDL (e.g. <code>CREATE INDEX CONCURRENTLY</code>) <span class="r">cannot</span> run inside a transaction &mdash; set <code>config.transaction = false</code></li>
+          <li>MySQL: implicit commit on DDL means rollback is partial &mdash; design your <code>down</code> accordingly</li>
+          <li><code>knex_migrations_lock.is_locked = 1</code> after a crash &mdash; <code>migrate:unlock</code> clears it</li>
+          <li>Adding a NOT NULL column to a large table without a default rewrites the whole table &mdash; <span class="r">avoid in prod</span></li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>CI / CD</h3>
+        <p>Run <code>migrate:latest</code> as a release-time job (not at app startup), gate it behind a health check, and fail the deploy if <code>migrate:status</code> shows drift.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 16 — SEEDS ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">16</span><h2>Seeds &amp; Fixtures</h2></div>
+  <p>Seeds populate a database with <span class="a">development</span> or <span class="g">test</span> data. They run unordered by filename, idempotently &mdash; clearing and repopulating &mdash; and never depend on production data.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Workflow</h3>
+<pre><code class="language-bash">npx knex seed:make 01_users
+npx knex seed:make 02_posts
+
+npx knex seed:run                  # all files in seeds dir
+npx knex seed:run --specific=01_users.js</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>A seed file</h3>
+<pre><code class="language-javascript">// db/seeds/development/01_users.js
+exports.seed = async function (knex) {
+  // clear in FK-safe order
+  await knex('posts').del();
+  await knex('users').del();
+
+  await knex('users').insert([
+    { id: 1, name: 'Alice', email: 'alice@dev.io', role: 'admin' },
+    { id: 2, name: 'Bob',   email: 'bob@dev.io',   role: 'user'  },
+    { id: 3, name: 'Carol', email: 'carol@dev.io', role: 'user'  },
+  ]);
+};
+
+// 02_posts.js
+exports.seed = async function (knex) {
+  await knex('posts').insert([
+    { author_id: 1, title: 'Hello' },
+    { author_id: 2, title: 'World' }
+  ]);
+};</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Faker for volume</h3>
+<pre><code class="language-javascript">const { faker } = require('@faker-js/faker');
+
+exports.seed = async function (knex) {
+  await knex('users').del();
+  const rows = Array.from({ length: 1_000 }, () =&gt; ({
+    name:  faker.person.fullName(),
+    email: faker.internet.email().toLowerCase(),
+    role:  faker.helpers.arrayElement(['user', 'admin'])
+  }));
+  await knex.batchInsert('users', rows, 200);
+};</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Best practice</h3>
+        <ul>
+          <li><span class="b">Idempotent</span> &mdash; safe to run twice</li>
+          <li><span class="b">Deterministic</span> &mdash; <code>faker.seed(42)</code> for reproducible test data</li>
+          <li>Separate <code>seeds/development/</code> from <code>seeds/test/</code> via two configs in the knexfile</li>
+          <li>Never seed in production &mdash; if you need reference data there, use a migration</li>
+          <li>Honour FK constraints &mdash; delete children before parents, insert parents first</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Pitfall</h3>
+        <p>Seed files run in <em>alphabetical</em> order, not creation order. Use a numeric prefix &mdash; <code>01_users.js</code>, <code>02_posts.js</code> &mdash; or you'll hit FK violations on the first run after rename.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 17 — TRANSACTIONS ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">17</span><h2>Transactions, Savepoints &amp; Isolation</h2></div>
+  <p>Knex transactions are <span class="a">scope-bound</span>: pass the <code>trx</code> handle wherever you'd pass <code>knex</code>. The promise's resolution commits; a thrown error rolls back. Nested transactions become <span class="g">savepoints</span> automatically.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Callback-style (auto-commit)</h3>
+<pre><code class="language-javascript">await knex.transaction(async (trx) =&gt; {
+  const [order] = await trx('orders')
+    .insert({ user_id: 1, total: 99.99 })
+    .returning('*');
+
+  await trx('inventory')
+    .where('product_id', 42)
+    .decrement('stock', 1);
+
+  await trx('payments').insert({
+    order_id: order.id, amount: 99.99
+  });
+});  // throws =&gt; ROLLBACK · resolves =&gt; COMMIT</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>Manual control</h3>
+<pre><code class="language-javascript">const trx = await knex.transaction();
+try {
+  await trx('users').insert({ ... });
+  await trx('audit_log').insert({ ... });
+  await trx.commit();
+} catch (e) {
+  await trx.rollback();
+  throw e;
+}</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Savepoints</h3>
+<pre><code class="language-javascript">await knex.transaction(async (trx) =&gt; {
+  await trx('users').insert(user);
+
+  // nested =&gt; SAVEPOINT
+  try {
+    await trx.transaction(async (sp) =&gt; {
+      await sp('subscriptions').insert(plan);
+      throw new Error('plan invalid');
+    });
+  } catch { /* savepoint rolled back */ }
+
+  // outer txn carries on
+  await trx('events').insert({ kind: 'user_created' });
+});</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Isolation level</h3>
+<pre><code class="language-javascript">await knex.transaction(
+  async (trx) =&gt; { /* ... */ },
+  { isolationLevel: 'serializable' } // PG, MySQL, MSSQL
+);</code></pre>
+        <ul>
+          <li><code>read uncommitted</code> · <code>read committed</code> · <code>repeatable read</code> · <code>serializable</code></li>
+          <li>PG/MSSQL default: <span class="b">read committed</span>. MySQL InnoDB: <span class="b">repeatable read</span></li>
+          <li>Use <code>serializable</code> for money &amp; quotas; expect <code>40001</code> retries</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Pitfalls</h3>
+        <ul>
+          <li>Mixing <code>knex(...)</code> and <code>trx(...)</code> in one transaction &mdash; the bare call uses the pool, escapes the txn, and deadlocks</li>
+          <li>Long-running transactions &mdash; one slow HTTP call inside <code>BEGIN ... COMMIT</code> can block writers for seconds</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 18 — STREAMS & BATCHING ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">18</span><h2>Streams &amp; Batching</h2></div>
+  <p>For million-row exports or imports, materialising the result set blows up memory. Knex offers <span class="a">cursor-style streams</span> for reads and <span class="g"><code>batchInsert</code></span> for writes &mdash; both pool-aware.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Streaming reads</h3>
+<pre><code class="language-javascript">// pg: server-side cursor; mysql2: row-by-row
+const stream = knex('events')
+  .select()
+  .where('created_at', '&gt;', cutoff)
+  .stream();
+
+for await (const row of stream) {
+  await processOne(row);     // back-pressure honoured
+}
+
+// pipe to a CSV stream
+const fastCsv = require('fast-csv');
+knex('events').stream()
+  .pipe(fastCsv.format({ headers: true }))
+  .pipe(fs.createWriteStream('events.csv'));</code></pre>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Pagination patterns</h3>
+        <ul>
+          <li><span class="p">Offset/limit</span> &mdash; simple, but slows for deep pages (DB scans rows it then discards)</li>
+          <li><span class="p">Keyset (seek)</span> &mdash; use the last row's sort key as <code>WHERE</code>; constant-time per page</li>
+        </ul>
+<pre><code class="language-javascript">// keyset pagination
+await knex('posts')
+  .where('created_at', '&lt;', lastSeenCreatedAt)
+  .orderBy('created_at', 'desc').limit(50);</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Batched writes</h3>
+<pre><code class="language-javascript">// chunk a large array into multiple INSERTs
+await knex.batchInsert('events', rows, 500)
+  .returning('id');
+
+// inside a transaction
+await knex.transaction(async (trx) =&gt; {
+  await knex.batchInsert('events', rows, 500).transacting(trx);
+});</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Bulk update / delete</h3>
+<pre><code class="language-javascript">// COPY-style bulk update via VALUES + JOIN (PG)
+await knex.raw(`
+  UPDATE users AS u
+     SET name = v.name
+    FROM (VALUES ${placeholders}) AS v(id, name)
+   WHERE v.id = u.id
+`, flatBindings);
+
+// Or: chunk a delete by primary key range
+let from = 0; const chunk = 10_000;
+while (true) {
+  const n = await knex('logs')
+    .whereBetween('id', [from, from + chunk]).del();
+  if (n === 0) break;
+  from += chunk;
+}</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Avoid</h3>
+        <p>Calling <code>.then()</code> on a giant un-paged <code>.select()</code> &mdash; the result set lands in Node's heap before you process row one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 19 — TYPESCRIPT ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">19</span><h2>TypeScript with Knex</h2></div>
+  <p>Knex ships official types. The big move is <span class="a">declaration merging</span> on <code>Knex.Tables</code> &mdash; once your tables are typed, every chain inherits column-level safety on inputs and result rows.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Declare your tables</h3>
+<pre><code class="language-typescript">// db/types.ts
+import { Knex } from 'knex';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: 'user' | 'admin';
+  active: boolean;
+  created_at: Date;
+}
+
+declare module 'knex/types/tables' {
+  interface Tables {
+    users: User;
+    users_composite: Knex.CompositeTableType&lt;
+      User,                                 // result
+      Pick&lt;User, 'email' | 'name'&gt;,         // insert
+      Partial&lt;Pick&lt;User, 'name' | 'role'&gt;&gt;  // update
+    &gt;;
+  }
+}</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>Use it</h3>
+<pre><code class="language-typescript">// rows is User[] &mdash; no any
+const rows = await knex('users').where({ active: true });
+
+// insert is type-checked
+await knex('users_composite').insert({
+  email: 'a@x', name: 'A'      // role/active inferred away
+});
+
+// update only takes the allowed subset
+await knex('users_composite').where({ id: 1 })
+  .update({ name: 'A2' });</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Generated types &mdash; Kysely-codegen</h3>
+        <p>For codebases big enough to drift from hand-written interfaces, run <code>kysely-codegen</code> against the live database, then re-export its <code>DB</code> map into <code>knex/types/tables</code>. Same generator, two consumers.</p>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Validators at the boundary</h3>
+<pre><code class="language-typescript">import { z } from 'zod';
+
+const UserSchema = z.object({
+  id: z.number(),
+  email: z.string().email(),
+  name: z.string(),
+  role: z.enum(['user', 'admin']),
+});
+
+const rows = await knex('users').where({ id });
+const safe = z.array(UserSchema).parse(rows);
+//   ^? &mdash; runtime-validated User[]</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Limits</h3>
+        <p>Knex types are <em>structural</em>, not <em>generated</em> &mdash; <code>knex.raw</code> result types are <code>any</code>, ad-hoc joins lose typing, and there's no compile-time SQL syntax check. If you need that, look at <span class="r">Kysely</span> or <span class="r">Drizzle</span>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 20 — TESTING ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">20</span><h2>Testing Database Code</h2></div>
+  <p>Tests need <span class="a">isolation</span>, <span class="g">speed</span> and <span class="p">fidelity</span>. Knex's dialect-portability and migrations give you three good strategies; pick one per layer.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Strategy A &mdash; in-memory SQLite</h3>
+<pre><code class="language-javascript">const knex = require('knex')({
+  client: 'better-sqlite3',
+  connection: { filename: ':memory:' },
+  useNullAsDefault: true
+});
+
+beforeAll(async () =&gt; {
+  await knex.migrate.latest();
+  await knex.seed.run();
+});
+afterAll(() =&gt; knex.destroy());</code></pre>
+        <p>Fast (millisecond per test). Lower fidelity &mdash; SQLite differs from PG on JSON, regex, locking and FK enforcement.</p>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>Strategy B &mdash; transaction rollback</h3>
+<pre><code class="language-javascript">let trx;
+beforeEach(async () =&gt; { trx = await knex.transaction(); });
+afterEach (async () =&gt; { await trx.rollback(); });
+
+// inject `trx` everywhere a repo expects `knex`
+test('creates a user', async () =&gt; {
+  await usersRepo.create(trx, { email: 'a@x' });
+  expect(await usersRepo.find(trx, 'a@x')).toBeDefined();
+});</code></pre>
+        <p>Real Postgres, near-zero teardown cost &mdash; but tests must thread <code>trx</code> through.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Strategy C &mdash; Testcontainers</h3>
+<pre><code class="language-javascript">const { GenericContainer } =
+  require('testcontainers');
+
+const pg = await new GenericContainer('postgres:16')
+  .withEnvironment({ POSTGRES_PASSWORD: 'pw' })
+  .withExposedPorts(5432).start();
+
+const knex = require('knex')({
+  client: 'pg',
+  connection: {
+    host: pg.getHost(),
+    port: pg.getMappedPort(5432),
+    user: 'postgres', password: 'pw', database: 'postgres'
+  }
+});
+await knex.migrate.latest();</code></pre>
+        <p>Highest fidelity &mdash; one container per worker; CI cost goes up but flake goes down.</p>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Tips that apply to all three</h3>
+        <ul>
+          <li>Use <code>knex.migrate.latest()</code>, not raw SQL fixtures &mdash; tests catch migration drift</li>
+          <li>Always <code>knex.destroy()</code> in <code>afterAll</code> &mdash; otherwise Jest hangs</li>
+          <li>Factory functions, not shared mutable seed rows &mdash; each test owns its data</li>
+          <li>Run unit tests against SQLite, integration tests against PG</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 21 — PERFORMANCE ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">21</span><h2>Performance &amp; Gotchas</h2></div>
+  <p>Knex is a thin layer &mdash; the SQL it generates is the SQL the DB plans. Most "Knex is slow" reports are <span class="a">missing indexes</span>, <span class="g">N+1 loops</span>, or <span class="p">pool starvation</span>.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Inspect what's running</h3>
+<pre><code class="language-javascript">const { sql, bindings } = q.toSQL().toNative();
+console.log(sql, bindings);
+
+knex.on('query', e =&gt;
+  console.log(e.__knexUid, e.sql, e.bindings));
+
+knex.on('query-response', (rows, e, b) =&gt;
+  console.log(e.__knexUid, 'rows:', rows.length));
+
+knex.on('query-error', (err, e) =&gt;
+  console.error(e.sql, '\n  ', err));</code></pre>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>The N+1 trap</h3>
+<pre><code class="language-javascript">// BAD &mdash; 1 + N queries
+const users = await knex('users');
+for (const u of users) {
+  u.posts = await knex('posts').where('author_id', u.id);
+}
+
+// GOOD &mdash; one query, group in JS
+const ids = users.map(u =&gt; u.id);
+const posts = await knex('posts').whereIn('author_id', ids);
+const byAuthor = Object.groupBy(posts, p =&gt; p.author_id);
+for (const u of users) u.posts = byAuthor[u.id] ?? [];</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green"><h3>Quick wins</h3>
+        <ul>
+          <li>Index every FK column &mdash; especially the child side of one-to-many</li>
+          <li>Composite indexes for filter+sort pairs &mdash; <code>(status, created_at desc)</code></li>
+          <li><code>EXPLAIN ANALYZE</code> the slowest 10 endpoints; act on Seq Scans on big tables</li>
+          <li>Use <code>.first()</code> when expecting one row &mdash; saves an array allocation and is clearer to readers</li>
+          <li>Set <code>statement_timeout</code> on the PG side to kill runaways</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:.3em;"><h3>Common pitfalls</h3>
+        <ul>
+          <li><span class="r">Returning huge result sets</span> &mdash; paginate or stream</li>
+          <li><span class="r">Holding transactions across HTTP calls</span> &mdash; one slow downstream stalls writers</li>
+          <li><span class="r">Mismatched pool size</span> &mdash; <code>max</code> &gt; database <code>max_connections / N</code> stalls under load</li>
+          <li><span class="r"><code>orderBy('random()')</code></span> &mdash; full sort; use <code>tablesample</code> on PG</li>
+          <li><span class="r">String comparison on indexed JSONB</span> &mdash; cast or use <code>jsonb_path_ops</code></li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Observability</h3>
+        <p>Wire <code>knex.on('query', ...)</code> to your logger with <code>req_id</code>; export pool gauges (used / free / pending) to Prometheus; alert on <code>numPendingAcquires</code> &gt; threshold for &gt; 30s.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 22 — VS ALTERNATIVES ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">22</span><h2>Knex vs Prisma, Drizzle, Kysely, TypeORM, raw</h2></div>
+  <p>The Node.js DB landscape grew up around Knex; today there are stronger alternatives <em>per axis</em>. The right choice depends on what you're optimising for.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Criterion</th>
+        <th>Raw (pg)</th>
+        <th>Knex</th>
+        <th>Kysely</th>
+        <th>Drizzle</th>
+        <th>Prisma</th>
+        <th>TypeORM</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="a">Abstraction</span></td><td>None</td><td>Query builder</td><td>Query builder</td><td>Query builder + ORM</td><td>ORM</td><td>ORM</td></tr>
+      <tr><td><span class="g">Type safety</span></td><td>None</td><td>Manual decls</td><td><span class="g">Excellent</span></td><td><span class="g">Excellent</span></td><td><span class="g">Excellent (codegen)</span></td><td>Decorator-based</td></tr>
+      <tr><td><span class="p">SQL fidelity</span></td><td><span class="g">Full</span></td><td>High</td><td><span class="g">Full</span></td><td><span class="g">Full</span></td><td>Medium</td><td>Medium</td></tr>
+      <tr><td><span class="b">Migrations</span></td><td>Manual</td><td>Built-in</td><td>Built-in</td><td>Built-in</td><td><span class="g">Built-in (best)</span></td><td>Built-in</td></tr>
+      <tr><td><span class="r">Dialects</span></td><td>One driver</td><td>PG/MySQL/SQLite/MSSQL/Oracle</td><td>PG/MySQL/SQLite</td><td>PG/MySQL/SQLite</td><td>PG/MySQL/SQLite/Mongo</td><td>~10 dialects</td></tr>
+      <tr><td>Bundle size</td><td><span class="g">Tiny</span></td><td>Small</td><td>Small</td><td>Small</td><td>Heavy (Rust engine)</td><td>Medium</td></tr>
+      <tr><td>Maturity</td><td>Battle-hardened</td><td>Mature (2013)</td><td>Active</td><td>Active</td><td>Active</td><td>Stagnant</td></tr>
+      <tr><td>Best for</td><td>Hot paths, bespoke SQL</td><td>SQL-first, multi-dialect</td><td>SQL-first + types</td><td>Edge / Cloudflare</td><td>CRUD, TS-first apps</td><td>Legacy AR-style apps</td></tr>
+    </tbody>
+  </table>
+  <div class="cols cols-3" style="margin-top:.3em;">
+    <div class="card amber">
+      <h3>Choose Knex when</h3>
+      <ul>
+        <li>You think in SQL and want SQL on the wire</li>
+        <li>Multi-dialect &mdash; SQLite for tests, PG in prod</li>
+        <li>Migrations &amp; seeds matter and you don't want a separate tool</li>
+        <li>You're building a higher-level abstraction (Objection.js-style)</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>Choose Kysely when</h3>
+      <ul>
+        <li>You want Knex-style SQL plus full TypeScript inference</li>
+        <li>Type-safe joins and result inference matter</li>
+        <li>PG / MySQL / SQLite is enough &mdash; no Oracle / MSSQL</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <h3>Choose Prisma / Drizzle when</h3>
+      <ul>
+        <li>Greenfield TypeScript project, CRUD-heavy</li>
+        <li>You want generated types from schema</li>
+        <li>Drizzle: edge runtimes (Cloudflare, Bun, Deno)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 23 — PRODUCTION ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">23</span><h2>Production Patterns</h2></div>
+  <p>Knex in a real app is one shared instance, threaded through repositories, observed at the pool level, and wrapped in a <span class="a">retry-on-transient</span> envelope.</p>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Repository pattern</h3>
+<pre><code class="language-javascript">// db/repositories/users.js
+module.exports = (db) =&gt; ({
+  byEmail: (email)  =&gt; db('users').where({ email }).first(),
+  create:  (input)  =&gt; db('users').insert(input).returning('*'),
+  update:  (id, p)  =&gt; db('users').where({ id }).update(p),
+  destroy: (id)     =&gt; db('users').where({ id }).del(),
+});
+
+// app.js
+const knex = require('./db');
+const users = require('./db/repositories/users')(knex);
+app.get('/users/:email',
+  async (req, res) =&gt; res.json(await users.byEmail(req.params.email)));</code></pre>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>Express + Knex</h3>
+<pre><code class="language-javascript">// share one Knex instance via DI
+function createApp(db) {
+  const app = express();
+  app.locals.db = db;
+  app.get('/users/:id', async (req, res, next) =&gt; {
+    try {
+      const u = await db('users').where('id', req.params.id).first();
+      if (!u) return res.sendStatus(404);
+      res.json(u);
+    } catch (err) { next(err); }
+  });
+  return app;
+}
+
+// graceful shutdown
+process.on('SIGTERM', async () =&gt; {
+  server.close(); await knex.destroy();
+});</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Retries on transient errors</h3>
+<pre><code class="language-javascript">async function withRetry(fn, { attempts = 3, base = 100 } = {}) {
+  for (let i = 0; i &lt; attempts; i++) {
+    try { return await fn(); }
+    catch (e) {
+      const transient = ['40001', '40P01', '57P01']
+        .includes(e.code) ||
+        ['ECONNRESET', 'ETIMEDOUT'].includes(e.code);
+      if (!transient || i === attempts - 1) throw e;
+      const delay = base * 2 ** i + Math.random() * base;
+      await new Promise(r =&gt; setTimeout(r, delay));
+    }
+  }
+}
+
+await withRetry(() =&gt; knex.transaction(transferFunds));</code></pre>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Observability checklist</h3>
+        <ul>
+          <li><span class="b">Pool gauges</span> &rarr; Prometheus: used / free / pending acquires / pending creates</li>
+          <li><span class="b">Slow-query log</span> &mdash; <code>knex.on('query-response', ...)</code> with timestamps; export histogram</li>
+          <li><span class="b">Trace context</span> &mdash; pass <code>req_id</code> through to every query for correlation</li>
+          <li><span class="b">Migration drift</span> &mdash; CI gate on <code>migrate:status</code></li>
+          <li><span class="b">Health probe</span> &mdash; <code>SELECT 1</code> via Knex on <code>/healthz</code>; never expose pool stats publicly</li>
+          <li>Set <code>statement_timeout</code>, <code>idle_in_transaction_session_timeout</code> at the DB</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Don't</h3>
+        <p>Don't catch every DB error and swallow it &mdash; constraint violations are signals from the schema, not bugs in <em>your</em> code.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════ SLIDE 24 — SUMMARY ═══════════════════════════════ -->
+<section>
+  <div class="slide-hdr"><span class="tag">24</span><h2>Summary &amp; Next Steps</h2></div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber"><h3>Where Knex earns its keep</h3>
+        <ul>
+          <li><span class="a">SQL stays SQL</span> &mdash; you compose it, the DB plans it</li>
+          <li><span class="a">One toolbox</span> for queries, schema, migrations, seeds, transactions, streams</li>
+          <li><span class="a">Multi-dialect</span> &mdash; SQLite for tests, PG/MySQL in prod, MSSQL/Oracle when forced</li>
+          <li>Battle-tested for over a decade; stable surface; small surface area</li>
+          <li>Excellent escape hatch via <code>knex.raw</code> &mdash; rest of the chain still composes</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:.3em;"><h3>Where it falls short</h3>
+        <ul>
+          <li>Type safety is hand-rolled &mdash; Kysely / Drizzle do better</li>
+          <li>No relational object graph &mdash; if you want <code>user.posts</code>, look at Prisma</li>
+          <li>v3 is in progress &mdash; pace of change is slower than newer entrants</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple"><h3>Take-aways</h3>
+        <ul>
+          <li>One Knex instance per process; one pool; <code>knex.destroy()</code> on shutdown</li>
+          <li>Always parameterise &mdash; <code>?</code>, <code>:name</code>, <code>??</code> &mdash; never concat user input</li>
+          <li>Migrations are immutable once shipped; expand &rarr; migrate &rarr; contract for big tables</li>
+          <li>Index every FK; index the columns you sort by; <code>EXPLAIN ANALYZE</code> the top 10</li>
+          <li>Use <code>.toSQL()</code> &mdash; understanding the SQL is half the battle</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:.3em;"><h3>Next steps</h3>
+        <ul>
+          <li>Build a small CRUD service: Express + Knex + PG, with migrations &amp; seeds</li>
+          <li>Set up a TS project with declaration-merged <code>Knex.Tables</code></li>
+          <li>Add a Testcontainers integration suite alongside SQLite unit tests</li>
+          <li>Profile with <code>knex.on('query-response')</code>; add a slow-query histogram</li>
+          <li>Try <span class="b">Objection.js</span> for a model layer over Knex, or <span class="b">Kysely</span> for a fully-typed alternative</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:.3em;"><h3>Essential reading</h3>
+        <ul>
+          <li><a href="https://knexjs.org/guide/">knexjs.org/guide</a> &mdash; the canonical reference</li>
+          <li><a href="https://github.com/knex/knex">github.com/knex/knex</a> &mdash; source &amp; changelog</li>
+          <li><a href="https://www.postgresql.org/docs/current/index.html">PostgreSQL docs</a> &mdash; the dialect Knex was first written for</li>
+          <li><a href="https://kysely.dev/">kysely.dev</a> &mdash; the type-safe sibling worth knowing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/notes/notes.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css">
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    controls: true,
+    progress: true,
+    transition: 'slide',
+    width: 1280,
+    height: 800,
+    margin: 0.04,
+    plugins: [ RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
